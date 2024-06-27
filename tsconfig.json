@@ -34,8 +34,9 @@
     "src/**/*" // Include all files in the src directory
   ],
   "exclude": [
-    "node_modules", // Exclude node_modules from compilation
-    "dist", // Exclude dist from compilation to prevent recursion
-    "src/**/*.test.ts" // Exclude Test-Files inside src
+    "src/tests",
+    "src/**/*.test.ts", // Exclude Test-Files inside src
+    "src/play",
+    "src/**/*.play.ts"
   ]
 }
