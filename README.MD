@@ -1,5 +1,7 @@
 # Error Alchemy
 
+.
+
 ## Description
 
 Error Alchemy is a sophisticated error-handling framework designed for robust error management in TypeScript applications. It provides a flexible and powerful toolkit for creating custom errors, handling error transmutation, and ensuring detailed error logging and resolution. The library leverages `Zod` schemas extensively to ensure advanced type-safety and comprehensive type inference.
