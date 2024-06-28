@@ -1,4 +1,4 @@
-// @index('./**/!(*.test|*.play).ts', f => `export * from "${f.path}";`)
+// @index('./**/!(*.test|*.play).ts', f => `export * from "${f.path}";`, { ignore: ["./tests/**/*", "./play/**/*"] })
 export * from "./config/defaultValues";
 export * from "./crafting/craft-errors/craftMysticError";
 export * from "./crafting/craft-errors/craftSynthesizedError";
@@ -15,7 +15,6 @@ export * from "./crafting/useErrorAlchemy/useErrorAlchemy";
 export * from "./error-code/errorCodeSelector";
 export * from "./error-code/isErrorCode";
 export * from "./error-code/types";
-export * from "./playground/SimpleClass";
 export * from "./severity/severityDescriptionMap";
 export * from "./severity/severitySelector";
 export * from "./severity/types";

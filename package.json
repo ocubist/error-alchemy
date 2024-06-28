@@ -1,16 +1,14 @@
 {
   "name": "@ocubist/error-alchemy",
-  "version": "0.8.0",
+  "version": "0.8.2",
   "description": "A powerful Node.js error-handling-framework with custom error types for easy debugging, enhanced error management, strong zod-support and useful quality-of-life-functionality for asserting and validating values.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "new-project": "npm install zod && npm install --save-dev @types/jest jest rimraf ts-jest ts-node typescript",
     "build": "rimraf dist && tsc && npm run docs",
     "publishProject": "npm run build && npm publish --access public",
-    "test": "jest --config jest.config.js",
+    "test": "jest --config jest.config.js --detectOpenHandles",
     "test:watch": "jest --config jest.config.js --watch",
-    "clean-install": "rimraf node_modules dist && npm install && npm run build",
     "docs": "typedoc"
   },
   "keywords": [
