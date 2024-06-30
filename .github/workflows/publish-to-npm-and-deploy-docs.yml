@@ -54,7 +54,7 @@ jobs:
         run: |
           CURRENT_VERSION=$(jq -r '.version' package.json)
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
-          echo "Current version: v$PREV_VERSION"
+          echo "Current version: v$CURRENT_VERSION"
 
       - name: Compare versions and bump if necessary
         id: bump_version
@@ -95,7 +95,7 @@ jobs:
 
       - name: Copy docs content to environment
         run: |
-          run: npm run docs
+          npm run docs
           mkdir -p /tmp/docs
           cp -r docs/* /tmp/docs
 
