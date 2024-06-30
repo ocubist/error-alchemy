@@ -75,7 +75,7 @@ jobs:
             npm version patch -m "Update to version %s (workflow)"
             CURRENT_VERSION=$(jq -r '.version' package.json)
             echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
-            git push origin main --follow-tags
+            git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git main --follow-tags
           fi
           echo "Version comparison and bump completed"
 
@@ -92,7 +92,7 @@ jobs:
             echo "Tag $TAG_VERSION already exists"
           else
             git tag -a "$TAG_VERSION" -m "Release $TAG_VERSION"
-            git push origin "$TAG_VERSION"
+            git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git "$TAG_VERSION"
             echo "Tag $TAG_VERSION added and pushed"
 
       - name: Publish to npm
@@ -118,4 +118,4 @@ jobs:
           cp -r /tmp/docs/* .
           git add .
           git commit -m "Update Documentation to v${{ env.CURRENT_VERSION }}"
-          git push origin gh-pages-docs --force
+          git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-docs --force
