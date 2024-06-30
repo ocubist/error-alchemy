@@ -61,6 +61,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Current Version: $CURRENT_VERSION"
+          echo "Previous Version: $PREV_VERSION"
 
           # Check if the version was manually changed
           if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
