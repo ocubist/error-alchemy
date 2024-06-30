@@ -38,7 +38,12 @@ jobs:
         id: check_changes
         run: |
           git fetch origin main
-          git diff --name-only origin/main HEAD^ | grep '^src/' || echo "No changes in src/ folder" && exit 1
+          if git diff --name-only origin/main HEAD^ | grep '^src/'; then
+            echo "Changes found in src/ folder"
+          else
+            echo "No changes in src/ folder"
+            exit 1
+          fi
 
       - name: Compare versions and publish
         if: steps.check_changes.outcome == 'success'
