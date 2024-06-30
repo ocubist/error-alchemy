@@ -29,43 +29,33 @@ jobs:
           fi
 
       - name: Set up Node.js
-        if: env.check_changes == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: "16"
           cache: "npm"
 
-      - name: Install dependencies
-        if: env.check_changes == 'true'
-        run: npm install
-
-      - name: Run tests
-        if: env.check_changes == 'true'
-        run: npm test
-
-      - name: Build project
-        if: env.check_changes == 'true'
-        run: npm run build
+      - name: Run Tests
+        run: |
+          npm install
+          npm run test
+          git reset --hard
 
       - name: Get previous version
-        if: env.check_changes == 'true'
         id: prev-version
         run: |
+          git checkout HEAD^
           PREV_VERSION=$(jq -r '.version' package.json)
           echo "PREV_VERSION=$PREV_VERSION" >> $GITHUB_ENV
+          git checkout -
 
       - name: Get current version
-        if: env.check_changes == 'true'
         id: curr-version
         run: |
           CURRENT_VERSION=$(jq -r '.version' package.json)
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
       - name: Compare versions and bump if necessary
-        if: env.check_changes == 'true'
         id: bump_version
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -79,10 +69,13 @@ jobs:
             CURRENT_VERSION=$(jq -r '.version' package.json)
             echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
             git push origin main --follow-tags
-          fi
+
+      - name: Install dependencies and build project
+        run: |
+          npm install
+          npm run build
 
       - name: Check if tag exists and add if necessary
-        if: env.check_changes == 'true'
         run: |
           git fetch --tags
           TAG_VERSION="v${{ env.CURRENT_VERSION }}"
@@ -92,26 +85,19 @@ jobs:
             git tag -a "$TAG_VERSION" -m "Release $TAG_VERSION"
             git push origin "$TAG_VERSION"
             echo "Tag $TAG_VERSION added and pushed"
-          fi
 
       - name: Publish to npm
-        if: env.check_changes == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: npm publish --access public
 
-      - name: Generate documentation
-        if: env.check_changes == 'true'
-        run: npm run docs
-
       - name: Copy docs content to environment
-        if: env.check_changes == 'true'
         run: |
+          run: npm run docs
           mkdir -p /tmp/docs
           cp -r docs/* /tmp/docs
 
       - name: Deploy documentation to gh-pages-docs branch
-        if: env.check_changes == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
