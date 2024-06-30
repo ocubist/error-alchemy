@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pages: write
+  pull-requests: write
 
 jobs:
   publish:
@@ -79,14 +80,10 @@ jobs:
             npm version patch -m "Update to version %s (workflow)"
             CURRENT_VERSION=$(jq -r '.version' package.json)
             echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
-            git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git main --follow-tags
+            git push origin main --follow-tags
+            echo "create_pr=true" >> $GITHUB_ENV
           fi
           echo "Version comparison and bump completed"
-
-      - name: Install dependencies and build project
-        run: |
-          npm install
-          npm run build
 
       - name: Check if tag exists and add if necessary
         run: |
@@ -96,11 +93,30 @@ jobs:
             echo "Tag $TAG_VERSION already exists"
           else
             git tag -a "$TAG_VERSION" -m "Release $TAG_VERSION"
-            git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git "$TAG_VERSION"
+            git push origin "$TAG_VERSION"
             echo "Tag $TAG_VERSION added and pushed"
+            echo "create_pr=true" >> $GITHUB_ENV
           fi
 
+      - name: Create pull request to sync main with local branch
+        if: env.create_pr == 'true'
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_REPO_TOKEN }}
+          commit-message: "Sync main with local branch"
+          title: "Sync main with local branch"
+          body: "This pull request updates your local branch with the latest changes from the main branch."
+          base: ${{ github.ref_name }}
+          head: main
+
+      - name: Install dependencies and build project
+        if: env.check_changes == 'true'
+        run: |
+          npm install
+          npm run build
+
       - name: Publish to npm
+        if: env.create_pr == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: |
@@ -108,12 +124,14 @@ jobs:
           npm publish --access public
 
       - name: Copy docs content to environment
+        if: env.create_pr == 'true'
         run: |
           npm run docs
           mkdir -p /tmp/docs
           cp -r docs/* /tmp/docs
 
       - name: Deploy documentation to gh-pages-docs branch
+        if: env.create_pr == 'true'
         env:
           GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
         run: |
@@ -125,4 +143,4 @@ jobs:
           cp -r /tmp/docs/* .
           git add .
           git commit -m "Update Documentation to v${{ env.CURRENT_VERSION }}"
-          git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-docs --force
+          git push origin gh-pages-docs --force
