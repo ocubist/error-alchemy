@@ -3,5 +3,5 @@ export const testFunc = () => {
 };
 
 export const testFunc2 = () => {
-  console.log("works!@!");
+  console.log("works!@!!");
 };

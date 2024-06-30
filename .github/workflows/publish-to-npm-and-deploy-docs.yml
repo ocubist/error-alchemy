@@ -46,6 +46,7 @@ jobs:
           git checkout HEAD^
           PREV_VERSION=$(jq -r '.version' package.json)
           echo "PREV_VERSION=$PREV_VERSION" >> $GITHUB_ENV
+          echo "Previous version: v$PREV_VERSION"
           git checkout -
 
       - name: Get current version
@@ -53,6 +54,7 @@ jobs:
         run: |
           CURRENT_VERSION=$(jq -r '.version' package.json)
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "Current version: v$PREV_VERSION"
 
       - name: Compare versions and bump if necessary
         id: bump_version
