@@ -25,19 +25,23 @@ jobs:
         run: npx typedoc --options typedoc.json
 
       - name: Deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAGES_TOKEN }}
         run: |
           # Configure git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check out the gh-pages-docs branch
-          git fetch origin
+          # Fetch the gh-pages-docs branch
+          git fetch origin gh-pages-docs
+
+          # Check out the gh-pages-docs branch or create it if it doesn't exist
           git checkout gh-pages-docs || git checkout --orphan gh-pages-docs
 
-          # Remove all files in the gh-pages-docs branch
+          # Remove all existing files in the gh-pages-docs branch
           git rm -rf .
 
-          # Copy generated docs to the root
+          # Copy the generated docs to the root
           cp -r docs/* .
 
           # Add all files to git
