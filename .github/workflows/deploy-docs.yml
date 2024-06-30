@@ -34,7 +34,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check out the gh-pages-docs branch, create if it doesn't exist
+          # Check out the gh-pages-docs branch, create if it doesn't exist already
           if git show-ref --quiet refs/heads/gh-pages-docs; then
             git checkout gh-pages-docs
           else
