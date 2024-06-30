@@ -61,8 +61,9 @@ jobs:
           CURRENT_VERSION=$(jq -r '.version' package.json)
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
-      - name: Compare versions and publish
+      - name: Compare versions and bump if necessary
         if: env.check_changes == 'true'
+        id: bump_version
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: |
@@ -74,13 +75,17 @@ jobs:
             echo "Version manually updated to $CURRENT_VERSION"
           else
             echo "Version not manually updated, bumping minor version"
-            CURRENT_VERSION=$(npm version minor -m "Update to version %s [skip ci]")
+            npm version minor -m "Update to version %s (workflow)"
+            CURRENT_VERSION=$(jq -r '.version' package.json)
             echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+            git push origin main --follow-tags
           fi
 
-          # Check if tag exists and add if necessary
+      - name: Check if tag exists and add if necessary
+        if: env.check_changes == 'true'
+        run: |
           git fetch --tags
-          TAG_VERSION="v$CURRENT_VERSION"
+          TAG_VERSION="v${{ env.CURRENT_VERSION }}"
           if git tag -l | grep -q "^$TAG_VERSION$"; then
             echo "Tag $TAG_VERSION already exists"
           else
@@ -89,8 +94,11 @@ jobs:
             echo "Tag $TAG_VERSION added and pushed"
           fi
 
-          # Publish to npm
-          npm publish --access public
+      - name: Publish to npm
+        if: env.check_changes == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: npm publish --access public
 
       - name: Generate documentation
         if: env.check_changes == 'true'
@@ -111,5 +119,5 @@ jobs:
           git rm -rf .
           cp -r /tmp/docs/* .
           git add .
-          git commit -m "Update Documentation to $TAG_VERSION"
+          git commit -m "Update Documentation to v${{ env.CURRENT_VERSION }}"
           git push origin gh-pages-docs --force
