@@ -24,6 +24,18 @@ jobs:
           if [ -f .env.github ]; then
             export $(grep -v '^#' .env.github | xargs)
             echo "AUTO_PUBLISH_PROJECT=${AUTO_PUBLISH_PROJECT}" >> $GITHUB_ENV
+            if [ "$AUTO_PUBLISH_PROJECT" == "false" ]; then
+              echo "Skipping publishing because AUTO_PUBLISH_PROJECT is set to false via .env.github"
+              exit 0
+            elif [ "$AUTO_PUBLISH_PROJECT" == "true" ]; then
+              echo "Proceeding with publishing because AUTO_PUBLISH_PROJECT is set to true via .env.github"
+            else
+              echo "AUTO_PUBLISH_PROJECT via .env.github is not set, therefore the publishing will be aborted"
+              exit 1
+            fi
+          else
+            echo ".env.github file not found, therefore the publishing will be aborted"
+            exit 1
           fi
 
       - name: Check for changes in src/ folder
