@@ -1,0 +1,63 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'src/')
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for accurate comparison
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Get previous version
+        id: prev-version
+        run: echo "::set-output name=PREV_VERSION::$(jq -r '.version' package.json)"
+
+      - name: Compare versions and publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Get current version
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+
+          # Get previous version
+          PREV_VERSION=${{ steps.prev-version.outputs.PREV_VERSION }}
+
+          # Check if the version was manually changed
+          if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
+            echo "Version manually updated to $CURRENT_VERSION"
+          else
+            echo "Version not manually updated, bumping minor version"
+            CURRENT_VERSION=$(npm version minor -m "Update to version %s [skip ci]")
+          fi
+
+          # Publish to npm
+          npm publish
+
+          # Push the version bump commit and tag
+          git push https://x-access-token:${{ secrets.PAGES_TOKEN }}@github.com/${{ github.repository }} --follow-tags
