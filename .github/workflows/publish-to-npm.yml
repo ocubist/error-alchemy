@@ -8,7 +8,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'src/')
 
     steps:
       - name: Checkout the repository
@@ -35,7 +34,14 @@ jobs:
         id: prev-version
         run: echo "::set-output name=PREV_VERSION::$(jq -r '.version' package.json)"
 
+      - name: Check for changes in src/ folder
+        id: check_changes
+        run: |
+          git fetch origin main
+          git diff --name-only origin/main HEAD^ | grep '^src/' || echo "No changes in src/ folder" && exit 1
+
       - name: Compare versions and publish
+        if: steps.check_changes.outcome == 'success'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: |
