@@ -98,6 +98,7 @@ jobs:
             git tag -a "$TAG_VERSION" -m "Release $TAG_VERSION"
             git push https://x-access-token:${{ secrets.GH_REPO_TOKEN }}@github.com/${{ github.repository }}.git "$TAG_VERSION"
             echo "Tag $TAG_VERSION added and pushed"
+          fi
 
       - name: Publish to npm
         env:
