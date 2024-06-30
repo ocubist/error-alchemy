@@ -26,6 +26,7 @@ export * from "./utility/createIdentifier";
 export * from "./utility/escapeIdentifierPart";
 export * from "./utility/popStackLayer";
 export * from "./utility/PropsValidationError";
+export * from "./utility/testFunc";
 export * from "./utility/types";
 export * from "./validation/asserters/assert/assert";
 export * from "./validation/asserters/assertDefined/assertDefined";
