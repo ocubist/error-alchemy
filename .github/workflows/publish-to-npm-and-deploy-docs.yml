@@ -19,7 +19,15 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for accurate comparison
 
+      - name: Load environment variables
+        run: |
+          if [ -f .env.github ]; then
+            export $(grep -v '^#' .env.github | xargs)
+            echo "AUTO_PUBLISH_PROJECT=${AUTO_PUBLISH_PROJECT}" >> $GITHUB_ENV
+          fi
+
       - name: Check for changes in src/ folder
+        if: env.AUTO_PUBLISH_PROJECT == 'true'
         id: check_changes
         run: |
           git fetch origin main
@@ -33,21 +41,21 @@ jobs:
           fi
 
       - name: Set up Node.js
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: "16"
           cache: "npm"
 
       - name: Run Tests
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         run: |
           npm install
           npm run test
           git reset --hard
 
       - name: Get previous version
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         id: prev-version
         run: |
           git checkout HEAD^
@@ -57,7 +65,7 @@ jobs:
           git checkout -
 
       - name: Get current version
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         id: curr-version
         run: |
           CURRENT_VERSION=$(jq -r '.version' package.json)
@@ -65,7 +73,7 @@ jobs:
           echo "Current version: v$CURRENT_VERSION"
 
       - name: Compare versions and bump if necessary
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         id: bump_version
         env:
           GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
@@ -89,13 +97,13 @@ jobs:
           echo "Version comparison and bump completed"
 
       - name: Install dependencies and build project
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         run: |
           npm install
           npm run build
 
       - name: Check if tag exists and add if necessary
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         run: |
           git fetch --tags
           TAG_VERSION="v${{ env.CURRENT_VERSION }}"
@@ -108,7 +116,7 @@ jobs:
           fi
 
       - name: Publish to npm
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: |
@@ -116,14 +124,14 @@ jobs:
           npm publish --access public
 
       - name: Copy docs content to environment
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         run: |
           npm run docs
           mkdir -p /tmp/docs
           cp -r docs/* /tmp/docs
 
       - name: Deploy documentation to gh-pages-docs branch
-        if: env.check_changes == 'true'
+        if: env.check_changes == 'true' && env.AUTO_PUBLISH_PROJECT == 'true'
         env:
           GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
         run: |
