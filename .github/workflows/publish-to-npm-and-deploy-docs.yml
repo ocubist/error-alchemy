@@ -15,38 +15,45 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for accurate comparison
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: Build project
-        run: npm run build
-
-      - name: Get previous version
-        id: prev-version
-        run: echo "::set-output name=PREV_VERSION::$(jq -r '.version' package.json)"
-
       - name: Check for changes in src/ folder
         id: check_changes
         run: |
           git fetch origin main
           if git diff --name-only origin/main HEAD^ | grep '^src/'; then
             echo "Changes found in src/ folder"
+            echo "check_changes=true" >> $GITHUB_ENV
           else
             echo "No changes in src/ folder"
-            exit 1
+            echo "check_changes=false" >> $GITHUB_ENV
+            exit 0
           fi
 
+      - name: Set up Node.js
+        if: env.check_changes == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "npm"
+
+      - name: Install dependencies
+        if: env.check_changes == 'true'
+        run: npm install
+
+      - name: Run tests
+        if: env.check_changes == 'true'
+        run: npm test
+
+      - name: Build project
+        if: env.check_changes == 'true'
+        run: npm run build
+
+      - name: Get previous version
+        if: env.check_changes == 'true'
+        id: prev-version
+        run: echo "::set-output name=PREV_VERSION::$(jq -r '.version' package.json)"
+
       - name: Compare versions and publish
-        if: steps.check_changes.outcome == 'success'
+        if: env.check_changes == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
         run: |
@@ -67,8 +74,38 @@ jobs:
             CURRENT_VERSION=$(npm version minor -m "Update to version %s [skip ci]")
           fi
 
-          # Publish to npm
-          npm publish
+          # Check if tag exists and add if necessary
+          git fetch --tags
+          TAG_VERSION="v$CURRENT_VERSION"
+          if git tag -l | grep -q "^$TAG_VERSION$"; then
+            echo "Tag $TAG_VERSION already exists"
+          else
+            git tag -a "$TAG_VERSION" -m "Release $TAG_VERSION"
+            git push origin "$TAG_VERSION"
+            echo "Tag $TAG_VERSION added and pushed"
+          fi
 
-          # Push the version bump commit and tag
-          git push https://x-access-token:${{ secrets.PAGES_TOKEN }}@github.com/${{ github.repository }} --follow-tags
+          # Publish to npm
+          npm publish --access public
+
+      - name: Generate documentation
+        if: env.check_changes == 'true'
+        run: npm run docs
+
+      - name: Copy docs content to environment
+        if: env.check_changes == 'true'
+        run: |
+          mkdir -p /tmp/docs
+          cp -r docs/* /tmp/docs
+
+      - name: Deploy documentation to gh-pages-docs branch
+        if: env.check_changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout gh-pages-docs || git checkout --orphan gh-pages-docs
+          git rm -rf .
+          cp -r /tmp/docs/* .
+          git add .
+          git commit -m "Update Documentation to $TAG_VERSION"
+          git push origin gh-pages-docs --force
