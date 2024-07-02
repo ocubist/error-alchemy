@@ -1,6 +1,6 @@
 {
   "name": "@ocubist/error-alchemy",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "description": "A powerful Node.js error-handling-framework with custom error types for easy debugging, enhanced error management, strong zod-support and useful quality-of-life-functionality for asserting and validating values.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
